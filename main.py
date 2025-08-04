@@ -1,6 +1,5 @@
 from datetime import date
 from flask import Flask, abort, render_template, redirect, url_for, flash, request
-from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor
 from flask_gravatar import Gravatar
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user
@@ -12,6 +11,8 @@ from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
 import os
 # Optional: add contact me email functionality (Day 60)
 # import smtplib
+from flask_bootstrap import Bootstrap
+
 
 
 '''
@@ -30,11 +31,10 @@ This will install the packages from the requirements.txt for this project.
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_KEY')
 ckeditor = CKEditor(app)
-Bootstrap(app)
-
 # Configure Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
+Bootstrap(app)
 
 
 @login_manager.user_loader
