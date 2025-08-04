@@ -12,28 +12,20 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
 
-# Optional: for contact form
-import smtplib
-from email.mime.text import MIMEText
-
 # Load environment variables
 from dotenv import load_dotenv
 load_dotenv()
 
-'''
-Make sure required packages are installed:
-pip install -r requirements.txt
-'''
-
 # Flask App Initialization
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "8BYkEfBA6O6donzWlSihBXox7C0sKR6b")
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///posts.db")
+# Use SQLite with persistent storage on Render
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///posts.db").replace("://", "ql://", 1)
 
 # Extensions
 ckeditor = CKEditor(app)
 bootstrap = Bootstrap5(app)
-db = SQLAlchemy()  # Removed model_class=DeclarativeBase
+db = SQLAlchemy()
 db.init_app(app)
 
 # Login Manager
@@ -67,7 +59,6 @@ class User(UserMixin, db.Model):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     password: Mapped[str] = mapped_column(String(100), nullable=False)
 
-    # Relationships
     posts = relationship("BlogPost", back_populates="author")
     comments = relationship("Comment", back_populates="comment_author")
 
@@ -81,11 +72,9 @@ class BlogPost(db.Model):
     body: Mapped[str] = mapped_column(Text, nullable=False)
     img_url: Mapped[str] = mapped_column(String(250), nullable=False)
 
-    # Author
     author_id: Mapped[int] = mapped_column(Integer, db.ForeignKey("users.id"))
     author = relationship("User", back_populates="posts")
 
-    # Comments
     comments = relationship("Comment", back_populates="parent_post")
 
 
@@ -94,11 +83,9 @@ class Comment(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     text: Mapped[str] = mapped_column(Text, nullable=False)
 
-    # Foreign Keys
     author_id: Mapped[int] = mapped_column(Integer, db.ForeignKey("users.id"))
     post_id: Mapped[int] = mapped_column(Integer, db.ForeignKey("blog_posts.id"))
 
-    # Relationships
     comment_author = relationship("User", back_populates="comments")
     parent_post = relationship("BlogPost", back_populates="comments")
 
@@ -108,13 +95,13 @@ with app.app_context():
     db.create_all()
 
 
-# Inject current year into all templates
+# Inject current year into templates
 @app.context_processor
 def inject_year():
     return {'year': date.today().year}
 
 
-# Admin-only decorator (safe check)
+# Admin-only decorator
 def admin_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -273,27 +260,29 @@ def about():
     return render_template("about.html", current_user=current_user)
 
 
-# Contact Form with Email
 MAIL_ADDRESS = os.environ.get("MAIL_ADDRESS")
 MAIL_APP_PW = os.environ.get("MAIL_APP_PW")
 
 
 def send_email(name, email, phone, message):
-    subject = "New Contact Form Message"
-    body = f"Name: {name}\nEmail: {email}\nPhone: {phone}\n\nMessage:\n{message}"
-    
-    msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = MAIL_ADDRESS
-    msg['To'] = MAIL_ADDRESS
-
     try:
+        import smtplib
+        from email.mime.text import MIMEText
+
+        subject = "New Contact Form Message"
+        body = f"Name: {name}\nEmail: {email}\nPhone: {phone}\n\nMessage:\n{message}"
+
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = MAIL_ADDRESS
+        msg['To'] = MAIL_ADDRESS
+
         with smtplib.SMTP("smtp.gmail.com", 587) as connection:
             connection.starttls()
             connection.login(MAIL_ADDRESS, MAIL_APP_PW)
             connection.sendmail(MAIL_ADDRESS, MAIL_ADDRESS, msg.as_string())
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        print(f"Email failed: {e}")
 
 
 @app.route("/contact", methods=["GET", "POST"])
