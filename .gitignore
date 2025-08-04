@@ -1,8 +1,0 @@
-.env
-__pycache__
-*.pyc
-venv/
-instance/
-posts.db
-.DS_Store
-.env.*

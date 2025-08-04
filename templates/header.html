@@ -6,53 +6,45 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <meta name="description" content="A personal blog by Shubham" />
-    <meta name="author" content="Shubham" />
-    <title>Shubham's Blog</title>
-
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>Mikster's Blog</title>
     {% block styles %}
-      <!-- Load Bootstrap CSS via Flask-Bootstrap -->
-      {{ bootstrap.load_css() }}
-
-      <!-- Favicon -->
-      <link
-        rel="icon"
-        type="image/x-icon"
-        href="{{ url_for('static', filename='assets/favicon.ico') }}"
-      />
-
-      <!-- Font Awesome -->
-      <script
-        src="https://use.fontawesome.com/releases/v6.3.0/js/all.js"
-        crossorigin="anonymous"
-      ></script>
-
-      <!-- Google Fonts -->
-      <link
-        href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic"
-        rel="stylesheet"
-        type="text/css"
-      />
-      <link
-        href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800"
-        rel="stylesheet"
-        type="text/css"
-      />
-
-      <!-- Custom CSS -->
-      <link
-        href="{{ url_for('static', filename='css/styles.css') }}"
-        rel="stylesheet"
-      />
+    <!-- Load Bootstrap-Flask CSS here -->
+    {{ bootstrap.load_css() }}
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="{{ url_for('static', filename='assets/favicon.ico') }}"
+    />
+    <!-- Font Awesome icons (free version)-->
+    <script
+      src="https://use.fontawesome.com/releases/v6.3.0/js/all.js"
+      crossorigin="anonymous"
+    ></script>
+    <!-- Google fonts-->
+    <link
+      href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link
+      href="{{ url_for('static', filename='css/styles.css') }}"
+      rel="stylesheet"
+    />
     {% endblock %}
   </head>
-
   <body>
-    <!-- Navigation -->
+    <!-- Navigation-->
     <nav class="navbar navbar-expand-lg navbar-light" id="mainNav">
       <div class="container px-4 px-lg-5">
-        <a class="navbar-brand" href="{{ url_for('get_all_posts') }}">Shubham's Blog</a>
-
+        <a class="navbar-brand" href="/">Start Adventuring</a>
         <button
           class="navbar-toggler"
           type="button"
@@ -65,7 +57,6 @@
           Menu
           <i class="fas fa-bars"></i>
         </button>
-
         <div class="collapse navbar-collapse" id="navbarResponsive">
           <ul class="navbar-nav ms-auto py-4 py-lg-0">
             <li class="nav-item">
@@ -75,33 +66,31 @@
                 >Home</a
               >
             </li>
-
-            <!-- Show Login/Register or Logout based on auth state -->
-            {% if current_user.is_authenticated %}
-              <li class="nav-item">
-                <a
-                  class="nav-link px-lg-3 py-3 py-lg-4"
-                  href="{{ url_for('logout') }}"
-                  >Log Out</a
-                >
-              </li>
-            {% else %}
-              <li class="nav-item">
-                <a
-                  class="nav-link px-lg-3 py-3 py-lg-4"
-                  href="{{ url_for('login') }}"
-                  >Login</a
-                >
-              </li>
-              <li class="nav-item">
-                <a
-                  class="nav-link px-lg-3 py-3 py-lg-4"
-                  href="{{ url_for('register') }}"
-                  >Register</a
-                >
-              </li>
+            <!-- Only show Login/Register if user is logged out. Otherwise show "Log Out" -->
+            {% if not current_user.is_authenticated: %}
+            <li class="nav-item">
+              <a
+                class="nav-link px-lg-3 py-3 py-lg-4"
+                href="{{ url_for('login') }}"
+                >Login</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link px-lg-3 py-3 py-lg-4"
+                href="{{ url_for('register') }}"
+                >Register</a
+              >
+            </li>
+            {% else: %}
+            <li class="nav-item">
+              <a
+                class="nav-link px-lg-3 py-3 py-lg-4"
+                href="{{ url_for('logout') }}"
+                >Log Out</a
+              >
+            </li>
             {% endif %}
-
             <li class="nav-item">
               <a
                 class="nav-link px-lg-3 py-3 py-lg-4"
