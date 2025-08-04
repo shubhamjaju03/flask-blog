@@ -1,7 +1,6 @@
 from datetime import date
 import os
 from flask import Flask, abort, render_template, redirect, url_for, flash, request
-from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
 from flask_gravatar import Gravatar
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user
@@ -24,7 +23,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:/
 
 # Extensions
 ckeditor = CKEditor(app)
-bootstrap = Bootstrap5(app)
 db = SQLAlchemy()
 db.init_app(app)
 
