@@ -224,7 +224,7 @@ def admin_panel():
     else:
         users = User.query.all()
     return render_template(
-        "admin_panel.html",
+        "admin-panel.html",
         users=users,
         search_query=search_query,
         current_user=current_user
@@ -236,12 +236,12 @@ def admin_panel():
 def delete_user(user_id):
     if user_id == 1:
         flash("Cannot delete the main admin user.")
-        return redirect(url_for('admin_panel'))
+        return redirect(url_for('admin-panel'))
     user = User.query.get_or_404(user_id)
     db.session.delete(user)
     db.session.commit()
     flash("User and their posts/comments deleted.")
-    return redirect(url_for('admin_panel'))
+    return redirect(url_for('admin-panel'))
 
 
 if __name__ == "__main__":
