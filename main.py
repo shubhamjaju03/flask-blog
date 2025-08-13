@@ -14,7 +14,6 @@ import os
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 ckeditor = CKEditor(app)
 Bootstrap5(app)
 
@@ -26,21 +25,15 @@ login_manager.init_app(app)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-gravatar = Gravatar(app,
-                    size=100,
-                    rating='g',
-                    default='retro',
-                    force_default=False,
-                    force_lower=False,
-                    use_ssl=False,
-                    base_url=None)
+gravatar = Gravatar(app, size=100, rating='g', default='retro')
 
-# Connect to database via environment variable or fallback to SQLite for local dev
+# Connect to database
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///posts.db")
 db = SQLAlchemy()
 db.init_app(app)
 
-# Define your models
+
+# MODELS
 class BlogPost(db.Model):
     __tablename__ = "blog_posts"
     id = db.Column(db.Integer, primary_key=True)
@@ -51,7 +44,8 @@ class BlogPost(db.Model):
     date = db.Column(db.String(250), nullable=False)
     body = db.Column(db.Text, nullable=False)
     img_url = db.Column(db.String(250), nullable=False)
-    comments = relationship("Comment", back_populates="parent_post")
+    comments = relationship("Comment", back_populates="parent_post", cascade="all, delete")
+
 
 class User(UserMixin, db.Model):
     __tablename__ = "users"
@@ -59,8 +53,9 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
     name = db.Column(db.String(100))
-    posts = relationship("BlogPost", back_populates="author")
-    comments = relationship("Comment", back_populates="comment_author")
+    posts = relationship("BlogPost", back_populates="author", cascade="all, delete")
+    comments = relationship("Comment", back_populates="comment_author", cascade="all, delete")
+
 
 class Comment(db.Model):
     __tablename__ = "comments"
@@ -71,11 +66,12 @@ class Comment(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey("blog_posts.id"))
     parent_post = relationship("BlogPost", back_populates="comments")
 
-# Initialize tables after app context is set
+
 with app.app_context():
     db.create_all()
 
-# Admin only decorator
+
+# ADMIN DECORATOR
 def admin_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -84,7 +80,8 @@ def admin_only(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Routes
+
+# ROUTES
 @app.route('/register', methods=["GET", "POST"])
 def register():
     form = RegisterForm()
@@ -94,9 +91,7 @@ def register():
             flash("You've already signed up with that email, log in instead!")
             return redirect(url_for('login'))
         hashed_password = generate_password_hash(
-            form.password.data,
-            method='pbkdf2:sha256',
-            salt_length=8
+            form.password.data, method='pbkdf2:sha256', salt_length=8
         )
         new_user = User(
             email=form.email.data,
@@ -108,6 +103,7 @@ def register():
         login_user(new_user)
         return redirect(url_for('get_all_posts'))
     return render_template("register.html", form=form, current_user=current_user)
+
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
@@ -125,15 +121,18 @@ def login():
             return redirect(url_for('get_all_posts'))
     return render_template("login.html", form=form, current_user=current_user)
 
+
 @app.route('/logout')
 def logout():
     logout_user()
     return redirect(url_for('get_all_posts'))
 
+
 @app.route('/')
 def get_all_posts():
     posts = BlogPost.query.all()
     return render_template("index.html", all_posts=posts, current_user=current_user)
+
 
 @app.route("/post/<int:post_id>", methods=["GET", "POST"])
 def show_post(post_id):
@@ -152,6 +151,7 @@ def show_post(post_id):
         db.session.commit()
     return render_template("post.html", post=requested_post, current_user=current_user, form=form)
 
+
 @app.route("/new-post", methods=["GET", "POST"])
 @admin_only
 def add_new_post():
@@ -169,6 +169,7 @@ def add_new_post():
         db.session.commit()
         return redirect(url_for('get_all_posts'))
     return render_template("make-post.html", form=form, current_user=current_user)
+
 
 @app.route("/edit-post/<int:post_id>", methods=["GET", "POST"])
 @admin_only
@@ -190,6 +191,7 @@ def edit_post(post_id):
         return redirect(url_for("show_post", post_id=post.id))
     return render_template("make-post.html", form=form, is_edit=True, current_user=current_user)
 
+
 @app.route("/delete/<int:post_id>")
 @admin_only
 def delete_post(post_id):
@@ -198,13 +200,49 @@ def delete_post(post_id):
     db.session.commit()
     return redirect(url_for('get_all_posts'))
 
+
 @app.route("/about")
 def about():
     return render_template("about.html", current_user=current_user)
 
+
 @app.route("/contact", methods=["GET", "POST"])
 def contact():
     return render_template("contact.html", current_user=current_user)
+
+
+# ================= ADMIN PANEL =================
+@app.route("/admin-panel")
+@admin_only
+def admin_panel():
+    search_query = request.args.get("search", "").strip()
+    if search_query:
+        users = User.query.filter(
+            (User.email.ilike(f"%{search_query}%")) |
+            (User.name.ilike(f"%{search_query}%"))
+        ).all()
+    else:
+        users = User.query.all()
+    return render_template(
+        "admin_panel.html",
+        users=users,
+        search_query=search_query,
+        current_user=current_user
+    )
+
+
+@app.route("/admin/delete-user/<int:user_id>")
+@admin_only
+def delete_user(user_id):
+    if user_id == 1:
+        flash("Cannot delete the main admin user.")
+        return redirect(url_for('admin_panel'))
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    flash("User and their posts/comments deleted.")
+    return redirect(url_for('admin_panel'))
+
 
 if __name__ == "__main__":
     app.run(debug=False, port=5001)
