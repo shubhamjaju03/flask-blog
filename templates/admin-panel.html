@@ -1,0 +1,82 @@
+{% include "header.html" %}
+
+<div class="container mt-4">
+    <h1 class="mb-4">Admin Panel</h1>
+
+    <!-- Search Form -->
+    <form method="get" action="{{ url_for('admin_panel') }}" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="search" class="form-control" placeholder="Search by name or email"
+                   value="{{ search_query }}">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="{{ url_for('admin_panel') }}" class="btn btn-secondary">Reset</a>
+        </div>
+    </form>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-info">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if users %}
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>User ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Password Hash</th>
+                    <th>Posts</th>
+                    <th>Comments Count</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td style="max-width:250px; word-break:break-all;">{{ user.password }}</td>
+                    <td>
+                        {% if user.posts %}
+                            <ul class="list-unstyled">
+                                {% for post in user.posts %}
+                                    <li>
+                                        <a href="{{ url_for('show_post', post_id=post.id) }}" target="_blank">{{ post.title }}</a>
+                                        <!-- Delete Post Button -->
+                                        <a href="{{ url_for('delete_post', post_id=post.id) }}"
+                                           class="btn btn-sm btn-danger"
+                                           onclick="return confirm('Delete this post?')">Delete Post</a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            No posts
+                        {% endif %}
+                    </td>
+                    <td>{{ user.comments|length }}</td>
+                    <td>
+                        {% if user.id != 1 %}
+                            <a href="{{ url_for('delete_user', user_id=user.id) }}"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Delete this user and all their data?')">
+                               Delete User
+                            </a>
+                        {% else %}
+                            <span class="badge bg-success">Admin</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No users found.</p>
+    {% endif %}
+</div>
+
+{% include "footer.html" %}
